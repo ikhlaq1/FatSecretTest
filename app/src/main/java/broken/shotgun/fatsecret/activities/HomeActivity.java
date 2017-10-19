@@ -8,10 +8,15 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,6 +41,9 @@ public class HomeActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+
+        Bundle bundle = getIntent().getExtras();
+        final String message = bundle.getString("message");
         SharedPreferences pref = getSharedPreferences(FatSecretUtils.PREFERENCES_FILE, MODE_PRIVATE);
         String accessToken = pref.getString(FatSecretUtils.OAUTH_ACCESS_TOKEN_KEY, ACCESS_TOKEN_MISSING);
 
@@ -52,7 +60,7 @@ public class HomeActivity extends ActionBarActivity {
         loggedInText.setText("auth token = " + pref.getString("oauth_access_token", ACCESS_TOKEN_MISSING));
 
         final TextView responseText = (TextView) findViewById(R.id.responseText);
-        responseText.setText("Searching foods for bananas...");
+        responseText.setText("Searching foods for "+ message+"...");
 
         final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -61,7 +69,7 @@ public class HomeActivity extends ActionBarActivity {
             public void run() {
                 BufferedReader reader = null;
                 try {
-                    String signedFoodSearchUrl = FatSecretUtils.sign("http://platform.fatsecret.com/rest/server.api?method=foods.search&format=json&search_expression=bananas");
+                    String signedFoodSearchUrl = FatSecretUtils.sign("http://platform.fatsecret.com/rest/server.api?method=foods.search&format=json&search_expression="+message+"");
 
                     Log.d(TAG, "Signed foods.search URL = " + signedFoodSearchUrl);
 
@@ -72,7 +80,41 @@ public class HomeActivity extends ActionBarActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            JsonObject response = gson.fromJson(json, JsonObject.class);
+
+                           JsonObject response = gson.fromJson(json, JsonObject.class);
+                            String jsonInString = gson.toJson(response);
+
+
+
+                            //meri line :)
+                            try {
+
+                                //parsing json from string into jsonObject
+                                JSONObject mainObject = new JSONObject(jsonInString);
+                                //getting root element of json and saving it in jsonobject
+                                JSONObject rootElement = mainObject.getJSONObject("foods");
+                                //getting food array from json where all food items are stored
+                                JSONArray  uniName = rootElement.getJSONArray("food");
+                                //here i m getting whole array element
+                                //but i need to acces just one element i.e "food_id"
+                                String foodId =uniName.getJSONObject(0).getString("food_description").toString();
+                                //
+                                String match = "Calories";
+                                String end = "kcal";
+                                int position = foodId.indexOf(match);
+                                int endof =foodId.indexOf(end);
+                                String substr=foodId.substring(position,endof);
+                                Toast.makeText(getApplicationContext(),substr,Toast.LENGTH_LONG).show();
+
+
+
+                                JSONArray arr = new JSONArray(response);
+                               JSONObject jObj = arr.getJSONObject(0);
+                                String calories = jObj.getString("food_description");
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
                             responseText.setText(gson.toJson(response));
                         }
                     });

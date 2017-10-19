@@ -49,7 +49,7 @@ public class LoginActivity extends ActionBarActivity {
         String accessToken = prefs.getString(FatSecretUtils.OAUTH_ACCESS_TOKEN_KEY, ACCESS_TOKEN_MISSING);
 
         if(!accessToken.equals(ACCESS_TOKEN_MISSING)) {
-            Intent home = new Intent(this, HomeActivity.class);
+            Intent home = new Intent(this, SecondActivity.class);
             startActivity(home);
             finish();
             return;
