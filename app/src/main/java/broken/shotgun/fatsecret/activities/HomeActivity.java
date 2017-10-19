@@ -1,7 +1,10 @@
 package broken.shotgun.fatsecret.activities;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,12 +32,19 @@ import broken.shotgun.fatsecret.utils.FatSecretUtils;
 import oauth.signpost.exception.OAuthCommunicationException;
 import oauth.signpost.exception.OAuthExpectationFailedException;
 import oauth.signpost.exception.OAuthMessageSignerException;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 
 public class HomeActivity extends ActionBarActivity {
     private static final String ACCESS_TOKEN_MISSING = "gone";
 
     private static final String TAG = HomeActivity.class.getName();
+    String subString;
+    String responce;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +57,7 @@ public class HomeActivity extends ActionBarActivity {
         SharedPreferences pref = getSharedPreferences(FatSecretUtils.PREFERENCES_FILE, MODE_PRIVATE);
         String accessToken = pref.getString(FatSecretUtils.OAUTH_ACCESS_TOKEN_KEY, ACCESS_TOKEN_MISSING);
 
-        if(accessToken.equals(ACCESS_TOKEN_MISSING)) {
+        if (accessToken.equals(ACCESS_TOKEN_MISSING)) {
             Intent login = new Intent(this, LoginActivity.class);
             startActivity(login);
             finish();
@@ -60,103 +70,85 @@ public class HomeActivity extends ActionBarActivity {
         loggedInText.setText("auth token = " + pref.getString("oauth_access_token", ACCESS_TOKEN_MISSING));
 
         final TextView responseText = (TextView) findViewById(R.id.responseText);
-        responseText.setText("Searching foods for "+ message+"...");
+        responseText.setText("Searching foods for " + message + "...");
 
-        final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        try {
+            String signedFoodSearchUrl = FatSecretUtils.sign("http://platform.fatsecret.com/rest/server.api?method=foods.search&format=json&search_expression=" + message + "");
+            Log.d(TAG, "Signed foods.search URL = " + signedFoodSearchUrl);
+            if (isNetworlAvailable()) {
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder().url(signedFoodSearchUrl).build();
+                Call call = client.newCall(request);
+                call.enqueue(new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                BufferedReader reader = null;
-                try {
-                    String signedFoodSearchUrl = FatSecretUtils.sign("http://platform.fatsecret.com/rest/server.api?method=foods.search&format=json&search_expression="+message+"");
+                    }
 
-                    Log.d(TAG, "Signed foods.search URL = " + signedFoodSearchUrl);
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        try {
+                            if (response.isSuccessful()) {
 
-                    HttpURLConnection foodSearchConnection = (HttpURLConnection) new URL(signedFoodSearchUrl).openConnection();
-                    reader = new BufferedReader(new InputStreamReader(foodSearchConnection.getInputStream()));
-                    final String json = reader.readLine();
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-
-                           JsonObject response = gson.fromJson(json, JsonObject.class);
-                            String jsonInString = gson.toJson(response);
-
-
-
-                            //meri line :)
-                            try {
+                                responce = response.body().string();
+                                String jsonInString = responce;
 
                                 //parsing json from string into jsonObject
                                 JSONObject mainObject = new JSONObject(jsonInString);
                                 //getting root element of json and saving it in jsonobject
                                 JSONObject rootElement = mainObject.getJSONObject("foods");
                                 //getting food array from json where all food items are stored
-                                JSONArray  uniName = rootElement.getJSONArray("food");
-                                //here i m getting whole array element
-                                //but i need to acces just one element i.e "food_id"
-                                String foodId =uniName.getJSONObject(0).getString("food_description").toString();
-                                //
+                                JSONArray uniName = rootElement.getJSONArray("food");
+                                String foodId = uniName.getJSONObject(0).getString("food_description").toString();
                                 String match = "Calories";
                                 String end = "kcal";
                                 int position = foodId.indexOf(match);
-                                int endof =foodId.indexOf(end);
-                                String substr=foodId.substring(position,endof);
-                                Toast.makeText(getApplicationContext(),substr,Toast.LENGTH_LONG).show();
+                                int endOf = foodId.indexOf(end);
+                                subString = foodId.substring(position, endOf);
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        responseText.setText("Amina khaley " + message + " isme sirf " + subString + " hai");
+                                    }
+                                });
 
-
-
-                                JSONArray arr = new JSONArray(response);
-                               JSONObject jObj = arr.getJSONObject(0);
-                                String calories = jObj.getString("food_description");
-
-                            } catch (JSONException e) {
-                                e.printStackTrace();
+                                // Toast.makeText(getApplicationContext(), subString, Toast.LENGTH_LONG).show();
+                            } else {
+                                alertUserAboutError();
                             }
-                            responseText.setText(gson.toJson(response));
+                        } catch (IOException e) {
+                            Log.e("errroorrr", "" + e);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                    });
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (OAuthExpectationFailedException e) {
-                    e.printStackTrace();
-                } catch (OAuthCommunicationException e) {
-                    e.printStackTrace();
-                } catch (OAuthMessageSignerException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        reader.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
                     }
-                }
+                });
             }
-        }).start();
-    }
+            else {
+                alertUserAboutError();
+            }
 
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_home, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        } catch (OAuthExpectationFailedException e) {
+            e.printStackTrace();
+        } catch (OAuthMessageSignerException e) {
+            e.printStackTrace();
+        } catch (OAuthCommunicationException e) {
+            e.printStackTrace();
         }
+    }
 
-        return super.onOptionsItemSelected(item);
+    private boolean isNetworlAvailable() {
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo=manager.getActiveNetworkInfo();
+        boolean isAvailable=false;
+        if (networkInfo!=null && networkInfo.isConnected()){
+                isAvailable= true;
+        }
+        return isAvailable;
+    }
+
+    private void alertUserAboutError() {
+        AlertDialogFragment dialogFragment = new AlertDialogFragment();
+        dialogFragment.show(getFragmentManager(),"error_dialog");
     }
 }
