@@ -1,4 +1,4 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -9,22 +9,39 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="broken.shotgun.fatsecret.activities.HomeActivity">
 
+   <!-- <TextView
+        android:id="@+id/descriptionText"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="@string/hello_world" />-->
+
     <TextView
         android:id="@+id/loggedInText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/hello_world" />
+        android:text="@string/hello_world"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true" />
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <TextView
+        android:id="@+id/responseText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/loggedInText"
+        android:layout_marginTop="50dp"
+        android:text="Name" />
 
-        <TextView
-            android:id="@+id/responseText"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="@string/hello_world" />
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Description"
+        android:layout_below="@+id/responseText"
+        android:layout_alignEnd="@+id/loggedInText"
+        android:layout_marginTop="69dp" />
 
-    </ScrollView>
 
-</LinearLayout>
+
+
+</RelativeLayout>

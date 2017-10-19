@@ -5,28 +5,14 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import broken.shotgun.fatsecret.R;
 import broken.shotgun.fatsecret.utils.FatSecretUtils;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -39,18 +25,22 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 
-public class HomeActivity extends ActionBarActivity {
+public class HomeActivity extends AppCompatActivity {
     private static final String ACCESS_TOKEN_MISSING = "gone";
 
     private static final String TAG = HomeActivity.class.getName();
-    String subString;
-    String responce;
+    private CurrentData mCurrentData;
+    private TextView name;
+    private TextView descriptionText;
+    String response;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
+        name= (TextView) findViewById(R.id.responseText);
+        descriptionText= (TextView) findViewById(R.id.description);
 
         Bundle bundle = getIntent().getExtras();
         final String message = bundle.getString("message");
@@ -69,8 +59,8 @@ public class HomeActivity extends ActionBarActivity {
         TextView loggedInText = (TextView) findViewById(R.id.loggedInText);
         loggedInText.setText("auth token = " + pref.getString("oauth_access_token", ACCESS_TOKEN_MISSING));
 
-        final TextView responseText = (TextView) findViewById(R.id.responseText);
-        responseText.setText("Searching foods for " + message + "...");
+        /*final TextView name = (TextView) findViewById(R.id.name);*/
+       // name.setText("Searching foods for " + message + "...");
 
         try {
             String signedFoodSearchUrl = FatSecretUtils.sign("http://platform.fatsecret.com/rest/server.api?method=foods.search&format=json&search_expression=" + message + "");
@@ -88,30 +78,17 @@ public class HomeActivity extends ActionBarActivity {
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
                         try {
+                            HomeActivity.this.response = response.body().string();
+                            String jsonInString = HomeActivity.this.response;
                             if (response.isSuccessful()) {
-
-                                responce = response.body().string();
-                                String jsonInString = responce;
-
-                                //parsing json from string into jsonObject
-                                JSONObject mainObject = new JSONObject(jsonInString);
-                                //getting root element of json and saving it in jsonobject
-                                JSONObject rootElement = mainObject.getJSONObject("foods");
-                                //getting food array from json where all food items are stored
-                                JSONArray uniName = rootElement.getJSONArray("food");
-                                String foodId = uniName.getJSONObject(0).getString("food_description").toString();
-                                String match = "Calories";
-                                String end = "kcal";
-                                int position = foodId.indexOf(match);
-                                int endOf = foodId.indexOf(end);
-                                subString = foodId.substring(position, endOf);
+                                mCurrentData = getCurrentDetails(jsonInString);
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        responseText.setText("Amina khaley " + message + " isme sirf " + subString + " hai");
+
+                                        updateDisplay();
                                     }
                                 });
-
                                 // Toast.makeText(getApplicationContext(), subString, Toast.LENGTH_LONG).show();
                             } else {
                                 alertUserAboutError();
@@ -128,15 +105,39 @@ public class HomeActivity extends ActionBarActivity {
                 alertUserAboutError();
             }
 
-        } catch (OAuthExpectationFailedException e) {
-            e.printStackTrace();
-        } catch (OAuthMessageSignerException e) {
+        } catch (OAuthExpectationFailedException | OAuthMessageSignerException e) {
             e.printStackTrace();
         } catch (OAuthCommunicationException e) {
             e.printStackTrace();
         }
     }
 
+
+
+        private CurrentData getCurrentDetails(String jsonInString) throws JSONException {
+        JSONObject mainObject = new JSONObject(jsonInString);
+        //getting root element of json and saving it in jsonobject
+        JSONObject rootElement = mainObject.getJSONObject("foods");
+        //getting food array from json where all food items are stored
+        JSONArray uniName = rootElement.getJSONArray("food");
+        String food_name = uniName.getJSONObject(0).getString("food_name").toString();
+        String food_description = uniName.getJSONObject(0).getString("food_description").toString();
+        /*String match = "Calories";
+        String end = "kcal";*/
+       /* int position = food_name.indexOf(match);
+        int endOf = food_name.indexOf(end);
+        subString = food_name.substring(position, endOf);*/
+        CurrentData currentData = new CurrentData();
+        currentData.setFood_name(food_name);
+        currentData.setFood_description(food_description);
+       //Log.i(TAG,food_name);
+        return currentData;
+    }
+
+    private void updateDisplay() {
+        name.setText(mCurrentData.getFood_name());
+        descriptionText.setText(mCurrentData.getFood_description());
+    }
     private boolean isNetworlAvailable() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo=manager.getActiveNetworkInfo();
