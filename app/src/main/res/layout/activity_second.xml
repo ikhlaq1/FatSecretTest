@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#87B952"
     tools:context="broken.shotgun.fatsecret.activities.SecondActivity">
 
 
@@ -12,7 +13,7 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Button"
+        android:text="Check Nutriton"
         tools:layout_editor_absoluteX="75dp"
         tools:layout_editor_absoluteY="134dp"
         android:layout_centerHorizontal="true"
@@ -20,12 +21,13 @@
 
 
 
-    <AutoCompleteTextView
+    <EditText
         android:id="@+id/autoCompleteTextView"
+        android:inputType="textCapSentences"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="38dp"
-        android:hint="enter food" />
+        android:hint="Enter food" />
 </RelativeLayout>

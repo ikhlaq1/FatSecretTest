@@ -1,27 +1,26 @@
 package broken.shotgun.fatsecret.activities;
 
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.Toast;
+import android.widget.EditText;
 
 import broken.shotgun.fatsecret.R;
 
-public class SecondActivity extends ActionBarActivity {
+public class SecondActivity extends AppCompatActivity {
+
 
 
     Button newButton;
-    AutoCompleteTextView fooditem;
+    EditText fooditem;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_second);
         newButton = (Button) findViewById(R.id.button);
-        fooditem= (AutoCompleteTextView) findViewById(R.id.autoCompleteTextView);
+        fooditem= (EditText) findViewById(R.id.autoCompleteTextView);
 
         newButton.setOnClickListener(new View.OnClickListener() {
             @Override

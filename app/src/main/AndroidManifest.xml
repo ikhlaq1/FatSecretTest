@@ -3,7 +3,7 @@
     package="broken.shotgun.fatsecret">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -21,8 +21,9 @@
         </activity>
         <activity
             android:name=".activities.HomeActivity"
-            android:label="@string/title_activity_home"></activity>
-        <activity android:name=".activities.SecondActivity"></activity>
+            android:label="@string/title_activity_home" />
+        <activity android:name=".activities.SecondActivity" />
+        <activity android:name=".activities.RecylerAcivity"></activity>
     </application>
 
 </manifest>

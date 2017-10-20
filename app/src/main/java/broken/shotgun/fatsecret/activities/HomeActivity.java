@@ -6,13 +6,20 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import java.io.IOException;
+import java.util.Arrays;
+
 import broken.shotgun.fatsecret.R;
 import broken.shotgun.fatsecret.utils.FatSecretUtils;
 import oauth.signpost.exception.OAuthCommunicationException;
@@ -27,20 +34,31 @@ import okhttp3.Response;
 
 public class HomeActivity extends AppCompatActivity {
     private static final String ACCESS_TOKEN_MISSING = "gone";
+    public static final String DATA = "DATA";
+
 
     private static final String TAG = HomeActivity.class.getName();
-    private CurrentData mCurrentData;
+    private CurrentData[] mCurrentData;
     private TextView name;
     private TextView descriptionText;
     String response;
+    RecyclerView recyclerView;
+    Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+       /* button = (Button) findViewById(R.id.victory);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(),RecylerAcivity.class);
+                intent.putExtra(DATA,mCurrentData);
+                startActivity(intent);
 
-        name= (TextView) findViewById(R.id.responseText);
-        descriptionText= (TextView) findViewById(R.id.description);
+            }
+        });*/
 
         Bundle bundle = getIntent().getExtras();
         final String message = bundle.getString("message");
@@ -56,8 +74,8 @@ public class HomeActivity extends AppCompatActivity {
 
         FatSecretUtils.setContext(this);
 
-        TextView loggedInText = (TextView) findViewById(R.id.loggedInText);
-        loggedInText.setText("auth token = " + pref.getString("oauth_access_token", ACCESS_TOKEN_MISSING));
+        /*TextView loggedInText = (TextView) findViewById(R.id.loggedInText);
+        loggedInText.setText("auth token = " + pref.getString("oauth_access_token", ACCESS_TOKEN_MISSING));*/
 
         /*final TextView name = (TextView) findViewById(R.id.name);*/
        // name.setText("Searching foods for " + message + "...");
@@ -82,11 +100,15 @@ public class HomeActivity extends AppCompatActivity {
                             String jsonInString = HomeActivity.this.response;
                             if (response.isSuccessful()) {
                                 mCurrentData = getCurrentDetails(jsonInString);
+                                Intent intent = new Intent(getApplicationContext(),RecylerAcivity.class);
+                                intent.putExtra(DATA,mCurrentData);
+                                startActivity(intent);
+                                finish();
                                 runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
 
-                                        updateDisplay();
+                                        //updateDisplay();
                                     }
                                 });
                                 // Toast.makeText(getApplicationContext(), subString, Toast.LENGTH_LONG).show();
@@ -114,30 +136,40 @@ public class HomeActivity extends AppCompatActivity {
 
 
 
-        private CurrentData getCurrentDetails(String jsonInString) throws JSONException {
+        private CurrentData[] getCurrentDetails(String jsonInString) throws JSONException {
         JSONObject mainObject = new JSONObject(jsonInString);
         //getting root element of json and saving it in jsonobject
         JSONObject rootElement = mainObject.getJSONObject("foods");
         //getting food array from json where all food items are stored
         JSONArray uniName = rootElement.getJSONArray("food");
-        String food_name = uniName.getJSONObject(0).getString("food_name").toString();
-        String food_description = uniName.getJSONObject(0).getString("food_description").toString();
+
+        //String food_name = uniName.getJSONObject(0).getString("food_name").toString();
+       // String food_description = uniName.getJSONObject(0).getString("food_description").toString();
+         CurrentData[] foodDatas= new CurrentData[uniName.length()];
+        for (int i=0;i<uniName.length();i++){
+            JSONObject jsonData = uniName.getJSONObject(i);
+            CurrentData currentData = new CurrentData();
+            currentData.setFood_name(jsonData.getString("food_name"));
+            currentData.setFood_description(jsonData.getString("food_description"));
+            foodDatas[i] = currentData;
+        }
+        return foodDatas;
         /*String match = "Calories";
         String end = "kcal";*/
        /* int position = food_name.indexOf(match);
         int endOf = food_name.indexOf(end);
         subString = food_name.substring(position, endOf);*/
-        CurrentData currentData = new CurrentData();
+       /* CurrentData currentData = new CurrentData();
         currentData.setFood_name(food_name);
         currentData.setFood_description(food_description);
        //Log.i(TAG,food_name);
-        return currentData;
+        return currentData;*/
     }
 
-    private void updateDisplay() {
+   /* private void updateDisplay() {
         name.setText(mCurrentData.getFood_name());
         descriptionText.setText(mCurrentData.getFood_description());
-    }
+    }*/
     private boolean isNetworlAvailable() {
         ConnectivityManager manager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo=manager.getActiveNetworkInfo();
